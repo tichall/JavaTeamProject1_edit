@@ -167,16 +167,17 @@ public class CampManagementApplication {
         do {
             addFlag = true;
 
-            System.out.println("수강생 상태 입력[Green, Red, Yellow]: ");
-            status = sc.next();
+            System.out.print("수강생 상태 입력[Green, Red, Yellow]: ");
+            status = sc.nextLine();
             if (status.equals("Green") || status.equals("Red") || status.equals("Yellow")) {
                 break;
             } else addFlag = false;
             System.out.println("Green, Red, Yellow 중에 하나를 입력하세요. ");
 
         } while (!addFlag);
-        Student student = new Student(sequence(INDEX_TYPE_STUDENT), studentName, status); // 수강생 인스턴스 생성 예시 코드
-        // addSubjectList(student); 원래 이 코드를 사용했는데 메서드가 너무 많아진 것 같아 아래와 같이 수정
+
+        Student student = new Student(sequence(INDEX_TYPE_STUDENT), studentName, status);
+
         addSubjects(student, SUBJECT_TYPE_MANDATORY, MANDATORY_MIN); // 필수 과목 입력받기
         addSubjects(student, SUBJECT_TYPE_CHOICE, CHOICE_MIN); // 선택 과목 입력받기
         studentStore.add(student);
@@ -230,7 +231,7 @@ public class CampManagementApplication {
             }
         } while (!addFlag);
 
-        // 오류 없이 과목을 잘 선택한 경우 student 과목 목록 map에 추가해준다.
+        // 오류 없이 과목을 잘 선택한 경우 student 과목 목록 map에 추가
         student.getSubjectList().putAll(subjectMap);
 
         // 해당 학생의 subjectList를 설정하는 for문입니다.
@@ -315,12 +316,12 @@ public class CampManagementApplication {
     // 상태별 수강생 상태 조회
     private static void inquireStudentByStatus() {
         boolean addFlag;
-        String stat;
+        String state;
         do {
             addFlag = true;
             System.out.println("조회할 상태를 입력해주십시오. [Green, Red, Yellow]");
-            stat = sc.next();
-            if (stat.equals("Green") || stat.equals("Red") || stat.equals("Yellow")) {
+            state = sc.next();
+            if (state.equals("Green") || state.equals("Red") || state.equals("Yellow")) {
                 break;
             } else
                 addFlag = false;
@@ -328,8 +329,8 @@ public class CampManagementApplication {
 
         } while (!addFlag);
         for (Student student : studentStore) { // studentStore를 돌며
-            if (student.getStatus().equals(stat)) { // 상태가 입력받은 것과 같으면
-                System.out.println(student.getStudentName() + " : " + stat); // 수강생 이름과 상태를 출력하기
+            if (student.getStatus().equals(state)) { // 상태가 입력받은 것과 같으면
+                System.out.println(student.getStudentName() + " : " + state); // 수강생 이름과 상태를 출력하기
             }
         }
     }
@@ -522,7 +523,6 @@ public class CampManagementApplication {
     }
 
     // 수강생의 과목별 시험 회차 및 점수 등록
-    // TODO
     private static void createScore() {
         String studentId = getStudentId(); // 관리할 수강생 고유 번호
         Student student = null;
@@ -551,15 +551,14 @@ public class CampManagementApplication {
 
             // 숫자 입력 판별 하는 boolean 입니다.
             boolean check = true;
-
             String line = "";
-
-            System.out.println("점수 등록 하실 과목의 숫자를 입력 하세요.");
 
             // 과목 번호, 과목 이름 출력
             for (Subject sub : subjectStore) {
                 System.out.println(index++ + ". " + sub.getSubjectName());
             }
+
+            System.out.println("점수를 등록하실 과목의 숫자를 입력해주세요.");
 
             line = sc.next();
             // 숫자 판별(숫자만 입력 가능)
@@ -596,10 +595,20 @@ public class CampManagementApplication {
         }
 
         while (true) {
+            // ★★ 입력받은 과목의 점수가 저장 되어있는 배열
+            int[] arr = student.getScoreList().get(INDEX_TYPE_SUBJECT + subject_Num);
+
             System.out.println("등록 하실 회차(1 ~ 10)를 입력 해주세요.");
             int num = sc.nextInt();
             if (num < 1 || num > 10) {
                 System.out.println("범위에 벗어난 숫자를 입력 하셨습니다.");
+                System.out.println("==================================");
+                continue;
+            }
+
+            if (arr[num - 1] != -1) {
+                System.out.println("중복 등록은 불가능합니다. 이미 " + num + "회차에 점수가 등록 되어 있습니다.");
+                System.out.println("==================================");
                 continue;
             }
 
@@ -607,13 +616,7 @@ public class CampManagementApplication {
             int score_tmp = sc.nextInt();
             if (score_tmp < 0 || score_tmp > 100) {
                 System.out.println("시험 점수의 범위를 벗어나셨습니다.");
-                continue;
-            }
-
-            // ★★ 입력받은 과목의 점수가 저장 되어있는 배열
-            int[] arr = student.getScoreList().get(INDEX_TYPE_SUBJECT + subject_Num);
-            if (arr[num - 1] != -1) {
-                System.out.println("중복 등록은 불가능합니다. 이미 " + num + "회차에 점수가 등록 되어 있습니다.");
+                System.out.println("==================================");
                 continue;
             }
 
