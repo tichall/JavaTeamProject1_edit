@@ -12,8 +12,8 @@ public class CampManagementApplication {
     private static List<Score> scoreStore;
 
     // 과목 타입
-    private static String SUBJECT_TYPE_MANDATORY = "MANDATORY";
-    private static String SUBJECT_TYPE_CHOICE = "CHOICE";
+    private static String SUBJECT_TYPE_MANDATORY = "필수";
+    private static String SUBJECT_TYPE_CHOICE = "선택";
 
     private static int MANDATORY_MIN = 3;
     private static int CHOICE_MIN = 2;
@@ -137,10 +137,10 @@ public class CampManagementApplication {
             System.out.println("7. 메인 화면 이동");
             System.out.print("관리 항목을 선택하세요...");
             int input = sc.nextInt();
-
+            System.out.println("=========================");
             switch (input) {
                 case 1 -> createStudent(); // 수강생 등록
-                case 2 -> inquireStudent(); // 수강생 목록 조회
+                case 2 -> inquireStudent(studentStore); // 수강생 목록 조회
                 case 3 -> changeStudentName(); // 수강생 이름 수정
                 case 4 -> changeStudentStatus(); // 수강생 상태 수정
                 case 5 -> inquireStudentByStatus();
@@ -156,7 +156,7 @@ public class CampManagementApplication {
 
     // 수강생 등록
     private static void createStudent() {
-        System.out.println("\n수강생을 등록합니다...");
+        System.out.println("수강생을 등록합니다...");
         System.out.print("수강생 이름 입력: ");
         String studentName = sc.next();
         sc.nextLine();
@@ -165,7 +165,6 @@ public class CampManagementApplication {
         String status;
         do {
             addFlag = true;
-
             System.out.print("수강생 상태 입력[Green, Red, Yellow]: ");
             status = sc.nextLine();
             if (status.equals("Green") || status.equals("Red") || status.equals("Yellow")) {
@@ -201,6 +200,7 @@ public class CampManagementApplication {
 
             // 공백 또는 쉼표로 구분받기
             String[] subjectArr = mandatorySubject.split("[, ]");
+
             // 동일한 값 입력 시 제거
             subjectArr = Arrays.stream(subjectArr).distinct().toArray(String[]::new);
 
@@ -246,53 +246,99 @@ public class CampManagementApplication {
 
     public static void printSubjects(String subjectType) {
         System.out.println("=========================");
-        if (subjectType.equals(SUBJECT_TYPE_MANDATORY)) {
-            System.out.print("[필수] ");
-            for (Subject sub : subjectStore) {
-                if (sub.getSubjectType().equals(SUBJECT_TYPE_MANDATORY)) {
-                    System.out.print(sub.getSubjectId().substring(2) + ". " + sub.getSubjectName() + " | ");
-                }
-            }
-        } else {
-            System.out.print("[선택] ");
-            for (Subject sub : subjectStore) {
-                if (sub.getSubjectType().equals(SUBJECT_TYPE_CHOICE)) {
-                    System.out.print(sub.getSubjectId().substring(2) + ". " + sub.getSubjectName() + " | ");
-                }
+        System.out.print("[" + subjectType + "] ");
+
+        for (Subject sub : subjectStore) {
+            if (sub.getSubjectType().equals(subjectType)) {
+                System.out.print(sub.getSubjectId().substring(2) + ". " + sub.getSubjectName() + " | ");
             }
         }
         System.out.println();
     }
 
+    // 동명이인 수강생 확인하기
+    private static String getExactStudentId(String studentName) {
+        List<Student> sameNameStudentList = new ArrayList<>();
+        for (Student student : studentStore) {
+            if (student.getStudentName().equals(studentName)) {
+                sameNameStudentList.add(student);
+            }
+        }
+
+        // 두 명 이상인 경우
+        if (sameNameStudentList.size() > 1) {
+            while (true) {
+                try {
+                    System.out.println("=========================");
+                    System.out.println("해당 이름을 가진 수강생 목록입니다!");
+                    inquireStudent(sameNameStudentList);
+                    System.out.println("=========================");
+                    System.out.print("수강생의 번호를 입력해주세요! (숫자만 입력) : ");
+                    int studentNum = sc.nextInt();
+                    for (Student student : sameNameStudentList) {
+                        if (student.getStudentId().equals(INDEX_TYPE_STUDENT + studentNum)) {
+                            return student.getStudentId();
+                        }
+                    }
+                    System.out.println("올바른 수강생 번호를 입력해주세요!");
+                } catch (InputMismatchException e) {
+                    System.out.println("숫자를 입력해주세요!");
+                    sc.next();
+                }
+            }
+        } else if (sameNameStudentList.isEmpty()) { // 일치하는 수강생이 없을 때
+            System.out.println("이름이 일치하는 수강생이 없습니다!");
+            return "Invalid";
+        } else {
+            return sameNameStudentList.get(0).getStudentId();
+        }
+    }
+
     // 수강생 목록 조회
-    private static void inquireStudent() {
-        System.out.println("\n수강생 목록을 조회합니다...");
+    private static void inquireStudent(List<Student> studentStore) {
+
+        System.out.println("수강생 목록을 조회합니다...");
         for (Student students : studentStore) {
             System.out.print("[" + students.getStudentId() + "] ");
             System.out.println("이름 : " + students.getStudentName());
         }
-        System.out.println("\n수강생 목록 조회 성공!");
     }
 
     // 수강생 이름 변경
     private static void changeStudentName() {
-        System.out.println("이름을 변경할 수강생 이름을 입력해주십시오.");
-        String studentName = sc.next();
+        String studentName;
+        String studentId;
+
+        do {
+            System.out.println("이름을 변경할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
+
         System.out.println("변경할 이름을 입력해 주십시오.");
         String changeName = sc.next();
+
         for (Student student : studentStore) {
-            if (student.getStudentName().equals(studentName)) {
+            if (student.getStudentId().equals(studentId)) {
                 student.changeName(changeName);
             }
         }
+        System.out.println("이름 변경 완료!");
     }
 
     // 수강생 상태 수정
     private static void changeStudentStatus() {
-        System.out.println("상태를 변경할 수강생 이름을 입력해주십시오.");
-        String studentName = sc.next(); // 수강생 이름 입력받기
-        String studentStatus; // 상태 입력받기
         boolean addFlag;
+        String studentName;
+        String studentId;
+        String studentStatus; // 상태 입력받기
+
+        do {
+            System.out.println("상태를 변경할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
+
         do {
             addFlag = true;
             System.out.println("변경할 상태를 입력해 주십시오. [Green, Red, Yellow]");
@@ -304,12 +350,12 @@ public class CampManagementApplication {
             System.out.println("Green, Red, Yellow 중에 하나를 입력하세요. ");
         } while (!addFlag);
 
-        for (Student student : studentStore) { // studentStore을 탐색하다가
-            if (student.getStudentName().equals(studentName)) { // 입력받은 이름과 같은 이름이 나오면
-                student.changeStatus(studentStatus); // changeStatus 함수를 이용해 상태 변경하기 -> changeStatus 함수는 Student.java
-                // 파일에 따로 구현되어있음
+        for (Student student : studentStore) { 
+            if (student.getStudentId().equals(studentId)) {
+                student.changeStatus(studentStatus);
             }
         }
+        System.out.println("상태 변경 완료!");
     }
 
     // 상태별 수강생 상태 조회
@@ -327,20 +373,32 @@ public class CampManagementApplication {
             System.out.println("Green, Red, Yellow 중에 하나를 입력하세요. ");
 
         } while (!addFlag);
-        for (Student student : studentStore) { // studentStore를 돌며
-            if (student.getStatus().equals(state)) { // 상태가 입력받은 것과 같으면
-                System.out.println(student.getStudentName() + " : " + state); // 수강생 이름과 상태를 출력하기
+        System.out.println("=========================");
+        System.out.println(state + " 상태의 수강생 목록");
+        System.out.println("=========================");
+        
+        for (Student student : studentStore) {
+            if (student.getStudentStatus().equals(state)) {
+                System.out.print("[" + student.getStudentId() + "] ");
+                System.out.println("이름 : " + student.getStudentName());
             }
         }
     }
 
     // 수강생 삭제
     private static void removeStudent() {
-        System.out.println("삭제할 수강생 이름을 입력해주십시오."); // 이름 겹치면 번호 입력받아야지 뭐 좀따해
-        String studentName = sc.next(); // 수강생 이름 입력받기
-        studentStore.removeIf(student -> student.getStudentName().equals(studentName)); // studentStore에서 입력받은 String과
-        // 같은 student 객체를 삭제하기
+        String studentName;
+        String studentId;
 
+        do {
+            System.out.println("삭제할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
+
+        final String finalStudentId = studentId;
+        studentStore.removeIf(student -> student.getStudentId().equals(finalStudentId));
+        System.out.println(studentName +" 수강생 삭제 완료!");
     }
 
     private static void displayScoreView() {
@@ -348,7 +406,7 @@ public class CampManagementApplication {
         while (flag) {
             System.out.println("==================================");
             System.out.println("점수 관리 실행 중...");
-            System.out.println("1. 수강생의 과목별 시험 회차 및 점수 등록");
+            System.out.println("1. 수강생의 과목별 시험 점수 등록");
             System.out.println("2. 수강생의 과목별 회차 점수 수정");
             System.out.println("3. 수강생의 특정 과목 회차별 등급 조회");
             System.out.println("4. 수강생의 과목별 평균 등급 조회");
@@ -356,7 +414,8 @@ public class CampManagementApplication {
             System.out.println("6. 메인 화면 이동");
             System.out.print("관리 항목을 선택하세요...");
             int input = sc.nextInt();
-
+            System.out.println("==================================");
+            
             switch (input) {
                 case 1 -> createScore(); // 수강생의 과목별 시험 회차 및 점수 등록
                 case 2 -> updateRoundScoreBySubject(); // 수강생의 과목별 회차 점수 수정
@@ -372,15 +431,288 @@ public class CampManagementApplication {
         }
     }
 
-    // 수강생의 과목별 평균 등급 조회
-    private static void inquireAverageGradeBySubject() {
-        String studentId = getStudentId();
+    // 수강생 번호 입력 받은 후 수강생이 존재하는지 확인
+    private static String getSelectedStudentId() {
+        System.out.print("관리할 수강생의 번호를 입력해주세요! : ");
+        String tmp = sc.next();
+
+        for (Student student : studentStore) {
+            if (student.getStudentId().equals(tmp)) {
+                return tmp;
+            }
+        }
+        return "Invalid";
+    }
+
+    // 수강생의 과목별 시험 회차 및 점수 등록
+    private static void createScore() {
+        boolean errFlag = true;
+        String studentId = "";
+        String studentName;
         Student student = null;
 
-        while (studentId.equals("Invalid")) {
-            System.out.println("해당 학생은 존재 하지 않습니다.");
-            studentId = getStudentId();
+        // 수정할 과목의 번호
+        int selectedSubjectNum = 0;
+        String selectedSubjectId = "";
+
+        // 입력받은 과목의 이름. (scoreList에서 key값으로 사용)
+        String selectedSubjectName = "";
+
+        do {
+            System.out.println("점수를 등록할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
+
+
+        // 해당 학생의 객체 student에 저장
+        for (Student tmp_student : studentStore) {
+            if (tmp_student.getStudentId().equals(studentId)) {
+                student = tmp_student;
+                break;
+            }
         }
+
+        do {
+            errFlag = true;
+
+            // 해당 학생이 수강하는 과목, 과목명 출력
+            printStudentSubjects(student);
+
+            System.out.print("점수를 등록할 과목 번호 하나를 입력해주세요! (숫자로 입력) : ");
+            try {
+                int inputSubjectId = sc.nextInt();
+                selectedSubjectId = INDEX_TYPE_SUBJECT + inputSubjectId;
+
+                // 과목 목록에 입력한 과목 번호와 일치하는 과목이 존재한다면..
+                if (student.getSubjectList().containsKey(selectedSubjectId)) {
+                    break;
+                } else {
+                    System.out.println("해당 학생은 입력하신 과목을 수강하지 않습니다.");
+                    errFlag = false;
+                }
+                // 과목 번호로 숫자가 아닌 값이 들어왔을 때
+            } catch (InputMismatchException e) {
+                System.out.println("숫자 하나를 입력해주세요!");
+                errFlag = false;
+            }
+        } while (!errFlag);
+
+        while (true) {
+            // ★★ 입력받은 과목의 점수가 저장 되어있는 배열
+            int[] arr = student.getScoreList().get(selectedSubjectId);
+
+            System.out.println("등록 하실 회차(1 ~ 10)를 입력 해주세요.");
+            int num = sc.nextInt();
+            if (num < 1 || num > 10) {
+                System.out.println("범위에 벗어난 숫자를 입력 하셨습니다.");
+                System.out.println("==================================");
+                continue;
+            }
+
+            if (arr[num - 1] != -1) {
+                System.out.println("중복 등록은 불가능합니다. 이미 " + num + "회차에 점수가 등록 되어 있습니다.");
+                System.out.println("==================================");
+                continue;
+            }
+
+            System.out.println(num + "회차의 시험 점수를 입력해주세요.");
+            int score_tmp = sc.nextInt();
+            if (score_tmp < 0 || score_tmp > 100) {
+                System.out.println("시험 점수의 범위를 벗어나셨습니다.");
+                System.out.println("==================================");
+                continue;
+            }
+
+            arr[num - 1] = score_tmp;
+            // 수정 완료
+            student.getScoreList().put(selectedSubjectId, arr);
+            break;
+        }
+
+        System.out.println("시험 점수를 등록합니다...");
+        System.out.println("점수 등록 성공!");
+    }
+
+    // 특정 학생이 수강하는 과목명과 과목 번호 출력
+    public static void printStudentSubjects(Student student) {
+        System.out.println("=========================");
+
+        // 과목 번호 순으로 해시맵 오름차순 정렬
+        List<String> mapKey = new ArrayList<>(student.getSubjectList().keySet());
+        Collections.sort(mapKey);
+
+        for (String key : mapKey) {
+            String subjectName = student.getSubjectList().get(key).getSubjectName();
+            System.out.println(key.substring(2) + ". " + subjectName);
+        }
+        System.out.println("=========================");
+    }
+
+    // 수강생의 과목별 회차 점수 수정
+    private static void updateRoundScoreBySubject() {
+        Student student = null;
+        String studentName;
+        String studentId; // 관리할 수강생 고유 번호
+        String selectedSubjectId = ""; // 선택한 과목 고유 번호
+        boolean errFlag = true;
+
+        do {
+            System.out.println("점수를 수정할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
+
+        for (Student tmp_student : studentStore) {
+            if (tmp_student.getStudentId().equals(studentId)) {
+                student = tmp_student;
+                break;
+            }
+        }
+
+        do {
+            errFlag = true;
+            // 해당 학생이 수강하는 과목, 과목명 출력
+            printStudentSubjects(student);
+            System.out.print("점수를 수정할 과목 번호 하나를 입력해주세요! (숫자로 입력) : ");
+            try {
+                int inputSubjectId = sc.nextInt();
+                selectedSubjectId = INDEX_TYPE_SUBJECT + inputSubjectId;
+
+                // 과목 목록에 입력한 과목 번호와 일치하는 과목이 존재한다면..
+                if (student.getSubjectList().containsKey(selectedSubjectId)) {
+                    int[] selectedSubjectArr = student.getScoreList().get(selectedSubjectId);
+                    for (int i = 0; i < selectedSubjectArr.length; i++) {
+                        // 회차 점수가 등록되지 않은 경우
+                        if (selectedSubjectArr[i] == -1) {
+                            System.out.println((i + 1) + "회차 점수 : - (등록되지 않음)");
+                        } else {
+                            System.out.println((i + 1) + "회차 점수 : " + selectedSubjectArr[i]);
+                        }
+                    }
+                } else {
+                    System.out.println("해당 학생은 입력하신 과목을 수강하지 않습니다!");
+                    errFlag = false;
+                }
+                // 과목 번호로 숫자가 아닌 값이 들어왔을 때
+            } catch (InputMismatchException e) {
+                System.out.println("숫자 하나를 입력해주세요!");
+                errFlag = false;
+            }
+        } while (!errFlag);
+
+        do {
+            errFlag = true;
+            System.out.print("수정할 회차를 입력해주세요! (회차 번호만 입력) : ");
+            try {
+                int selectedScoreNum = sc.nextInt();
+                // 옳은 회차 번호를 입력했을 때만 점수 수정 실행
+                if (selectedScoreNum >= 1 && selectedScoreNum <= 10) {
+                    updateRealScore(student.getScoreList().get(selectedSubjectId), selectedScoreNum);
+                } else {
+                    errFlag = false;
+                    System.out.println("올바른 회차 번호를 입력해주세요!");
+                }
+            } catch (InputMismatchException e) {
+                errFlag = false;
+                System.out.println("숫자를 입력해주세요!");
+            }
+        } while (!errFlag);
+        // 기능 구현
+        System.out.println("\n점수 수정 성공!");
+    }
+
+    // 점수 입력 받고 실제 회차별 점수 배열 값 업데이트
+    private static void updateRealScore(int[] selectedSubjectArr, int index) {
+        boolean errFlag = true;
+        do {
+            errFlag = true;
+            try {
+                System.out.print("수정할 점수값을 입력해주세요! (0 - 100) : ");
+                int score = sc.nextInt();
+                if (score >= 0 && score <= 100) {
+                    System.out.println("시험 점수를 수정합니다...");
+
+                    selectedSubjectArr[index - 1] = score;
+                    System.out.println(index + "회차 : " + score + " (수정)");
+                } else {
+                    System.out.println("0 ~ 100 사이의 숫자를 입력해주세요!");
+                    errFlag = false;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("숫자를 입력해주세요!");
+                errFlag = false;
+            }
+        } while (!errFlag);
+    }
+
+    // 수강생의 특정 과목 회차별 등급 조회
+    private static void inquireRoundGradeBySubject() {
+        int index = 1;
+        int find_Sub_Num = 0;
+        Student student = null;
+        String studentName;
+        String studentId;
+
+        do {
+            System.out.println("관리할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
+
+        // 해당 학생의 객체 student에 저장
+        for (Student tmp_student : studentStore) {
+            if (tmp_student.getStudentId().equals(studentId)) {
+                student = tmp_student;
+                break;
+            }
+        }
+
+        while (true) {
+            // 기능 구현 (조회할 특정 과목)
+            index = 1;
+            System.out.println("조회 하실 과목을 입력 해주세요 : ");
+            // 과목 번호, 과목 이름 출력
+            for (Subject sub : subjectStore) {
+                System.out.println(index++ + ". " + sub.getSubjectName());
+            }
+
+
+            //예외 처리 (알맞은 값만 입력 받도록)
+            try {
+                String input = sc.next();
+                find_Sub_Num = Integer.parseInt(input);
+                if (find_Sub_Num < 1 || find_Sub_Num > 9) {
+                    System.out.println("해당 과목 번호는 유효하지 않습니다.");
+                    continue;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("숫자를 입력 해주시길 바랍니다.");
+                continue;
+            }
+
+            System.out.println("회차별 등급을 조회합니다...");
+            if (find_Sub_Num <= 5) displayGrade_Mandatory(student, find_Sub_Num);
+            else displayGrade_Choice(student, find_Sub_Num);
+
+            System.out.println("\n등급 조회 성공!");
+
+            break;
+        }
+
+    }
+
+    // 수강생의 과목별 평균 등급 조회
+    private static void inquireAverageGradeBySubject() {
+        String studentName;
+        String studentId;
+        Student student = null;
+
+        do {
+            System.out.println("관리할 수강생 이름을 입력해주십시오.");
+            studentName = sc.next();
+            studentId = getExactStudentId(studentName);
+        } while (studentId.equals("Invalid"));
 
         for (Student tmp_student : studentStore) {
             if (tmp_student.getStudentId().equals(studentId)) {
@@ -423,8 +755,9 @@ public class CampManagementApplication {
                 addFlag = false;
             System.out.println("Green, Red, Yellow 중에 하나를 입력하세요. ");
         } while (!addFlag);
+
         for (Student student : studentStore) {
-            if (student.getStatus().equals(status)) {
+            if (student.getStudentStatus().equals(status)) {
                 System.out.println(student.getStudentName() + " 님의 평균 과목 등급 ");
                 Set<String> set = student.getSubjectList().keySet();
                 for (String key : set) {
@@ -506,294 +839,6 @@ public class CampManagementApplication {
             return 'F';
         else
             return 'N';
-    }
-
-    // 수강생 번호 입력 받은 후 수강생이 존재하는지 확인
-    private static String getStudentId() {
-        System.out.print("\n관리할 수강생의 번호를 입력하시오...");
-        String tmp = sc.next();
-
-        for (Student student : studentStore) {
-            if (student.getStudentId().equals(tmp)) {
-                return tmp;
-            }
-        }
-        return "Invalid";
-    }
-
-    // 수강생의 과목별 시험 회차 및 점수 등록
-    private static void createScore() {
-        String studentId = getStudentId(); // 관리할 수강생 고유 번호
-        Student student = null;
-
-        // 수정 할 과목의 번호
-        int subject_Num;
-
-        // 입력받은 과목의 이름. (scoreList에서 key값으로 사용)
-        String subject_Name = "";
-
-        while (studentId.equals("Invalid")) {
-            studentId = getStudentId();
-            System.out.println("해당 학생은 존재 하지 않습니다.");
-        }
-
-        // 해당 학생의 객체 student에 저장
-        for (Student tmp_student : studentStore) {
-            if (tmp_student.getStudentId().equals(studentId)) {
-                student = tmp_student;
-                break;
-            }
-        }
-
-        while (true) {
-            int index = 1;
-
-            // 숫자 입력 판별 하는 boolean 입니다.
-            boolean check = true;
-            String line = "";
-
-            // 과목 번호, 과목 이름 출력
-            for (Subject sub : subjectStore) {
-                System.out.println(index++ + ". " + sub.getSubjectName());
-            }
-
-            System.out.println("점수를 등록하실 과목의 숫자를 입력해주세요.");
-
-            line = sc.next();
-            // 숫자 판별(숫자만 입력 가능)
-            for (int i = 0; i < line.length(); i++) {
-                if (!Character.isDigit(line.charAt(i))) {
-                    check = false;
-                    break;
-                }
-            }
-
-            if (!check) {
-                System.out.println("숫자만 입력 가능 합니다.");
-                continue;
-            }
-
-            subject_Num = Integer.parseInt(line);
-
-            // 1 ~ 9 까지만 입력 받고 list는 0 ~ 8 까지만 유효하다.
-            if (subject_Num < 1 || subject_Num > 9) {
-                System.out.println("유효하지 않은 숫자를 입력 하셨습니다.");
-                continue;
-            }
-
-            // 수정한 예외처리 부분
-            try {
-                subject_Name = subjectStore.get(subject_Num - 1).getSubjectName();
-                if (!Objects.isNull(student) &&
-                        student.getSubjectList().get(INDEX_TYPE_SUBJECT + subject_Num).getSubjectName().equals(subject_Name))
-                    break;
-            } catch (Exception e) {
-                System.out.println("해당 학생은 입력하신 과목을 수강하지 않습니다.");
-            }
-
-        }
-
-        while (true) {
-            // ★★ 입력받은 과목의 점수가 저장 되어있는 배열
-            int[] arr = student.getScoreList().get(INDEX_TYPE_SUBJECT + subject_Num);
-
-            System.out.println("등록 하실 회차(1 ~ 10)를 입력 해주세요.");
-            int num = sc.nextInt();
-            if (num < 1 || num > 10) {
-                System.out.println("범위에 벗어난 숫자를 입력 하셨습니다.");
-                System.out.println("==================================");
-                continue;
-            }
-
-            if (arr[num - 1] != -1) {
-                System.out.println("중복 등록은 불가능합니다. 이미 " + num + "회차에 점수가 등록 되어 있습니다.");
-                System.out.println("==================================");
-                continue;
-            }
-
-            System.out.println(num + "회차의 시험 점수를 입력해주세요.");
-            int score_tmp = sc.nextInt();
-            if (score_tmp < 0 || score_tmp > 100) {
-                System.out.println("시험 점수의 범위를 벗어나셨습니다.");
-                System.out.println("==================================");
-                continue;
-            }
-
-            arr[num - 1] = score_tmp;
-            // 수정 완료
-            student.getScoreList().put(subject_Name, arr);
-            break;
-        }
-
-        System.out.println("시험 점수를 등록합니다...");
-        // 기능 구현
-        System.out.println("\n점수 등록 성공!");
-    }
-
-    // 특정 학생이 수강하는 과목명과 과목 번호 출력
-    public static void printStudentSubjects(Student student) {
-        System.out.println("=========================");
-
-        // 과목 번호 순으로 해시맵 오름차순 정렬
-        List<String> mapKey = new ArrayList<>(student.getSubjectList().keySet());
-        Collections.sort(mapKey);
-
-        for (String key : mapKey) {
-            String subjectName = student.getSubjectList().get(key).getSubjectName();
-            System.out.println(key.substring(2) + ". " + subjectName);
-        }
-
-        System.out.println();
-    }
-
-    // 수강생의 과목별 회차 점수 수정
-    private static void updateRoundScoreBySubject() {
-        Student student = null;
-        String studentId = getStudentId(); // 관리할 수강생 고유 번호
-        String selectedSubjectId = ""; // 선택한 과목 고유 번호
-        // int[] selectedSubjectArr; // 선택한 과목의 회차 점수가 보관될 배열
-        boolean errFlag = true;
-
-        // 학생 존재하는지 확인
-        while (studentId.equals("Invalid")) {
-            System.out.println("해당 학생은 존재 하지 않습니다.");
-            studentId = getStudentId();
-        }
-
-        for (Student tmp_student : studentStore) {
-            if (tmp_student.getStudentId().equals(studentId)) {
-                student = tmp_student;
-                break;
-            }
-        }
-
-        do {
-            errFlag = true;
-            // 해당 학생이 수강하는 과목, 과목명 출력
-            printStudentSubjects(student);
-            System.out.print("점수를 수정할 과목 번호 하나를 입력해주세요! (숫자로 입력) : ");
-            try {
-                int inputSubjectId = sc.nextInt();
-                selectedSubjectId = INDEX_TYPE_SUBJECT + inputSubjectId;
-
-                // 과목 목록에 입력한 과목 번호와 일치하는 과목이 존재한다면..
-                if (student.getSubjectList().containsKey(selectedSubjectId)) {
-                    int[] selectedSubjectArr = student.getScoreList().get(selectedSubjectId);
-                    for (int i = 0; i < selectedSubjectArr.length; i++) {
-                        // 회차 점수가 등록되지 않은 경우
-                        if (selectedSubjectArr[i] == -1) {
-                            System.out.println((i + 1) + "회차 점수 : - (등록되지 않음)");
-                        } else {
-                            System.out.println((i + 1) + "회차 점수 : " + selectedSubjectArr[i]);
-                        }
-                    }
-                } else {
-                    errFlag = false;
-                }
-                // 과목 번호로 숫자가 아닌 값이 들어왔을 때
-            } catch (InputMismatchException e) {
-                System.out.println("숫자 하나를 입력해주세요!");
-                errFlag = false;
-            }
-        } while (!errFlag);
-
-        do {
-            errFlag = true;
-            System.out.print("수정할 회차를 입력해주세요! (회차 번호만 입력) : ");
-            try {
-                int selectedScoreNum = sc.nextInt();
-                // 옳은 회차 번호를 입력했을 때만 점수 수정 실행
-                if (selectedScoreNum >= 1 && selectedScoreNum <= 10) {
-                    updateRealScore(student.getScoreList().get(selectedSubjectId), selectedScoreNum);
-                } else {
-                    errFlag = false;
-                    System.out.println("올바른 회차 번호를 입력해주세요!");
-                }
-            } catch (InputMismatchException e) {
-                errFlag = false;
-                System.out.println("숫자를 입력해주세요!");
-            }
-        } while (!errFlag);
-        // 기능 구현
-        System.out.println("\n점수 수정 성공!");
-    }
-
-    // 점수 입력 받고 실제 회차별 점수 배열 값 업데이트
-    private static void updateRealScore(int[] selectedSubjectArr, int index) {
-        boolean errFlag = true;
-        do {
-            errFlag = true;
-            try {
-                System.out.print("수정할 점수값을 입력해주세요! (0 - 100) : ");
-                int score = sc.nextInt();
-                if (score >= 0 && score <= 100) {
-                    System.out.println("시험 점수를 수정합니다...");
-
-                    selectedSubjectArr[index - 1] = score;
-                    System.out.println(index + "회차 : " + score + " (수정)");
-                } else {
-                    System.out.println("0 ~ 100 사이의 숫자를 입력해주세요!");
-                    errFlag = false;
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("숫자를 입력해주세요!");
-                errFlag = false;
-            }
-        } while (!errFlag);
-    }
-
-    // 수강생의 특정 과목 회차별 등급 조회
-    private static void inquireRoundGradeBySubject() {
-        int index = 1;
-        int find_Sub_Num = 0;
-        Student student = null;
-        String studentId = getStudentId(); // 관리할 수강생 고유 번호
-
-        while (studentId.equals("Invalid")) {
-            System.out.println("해당 학생은 존재 하지 않습니다.");
-            studentId = getStudentId();
-        }
-
-        // 해당 학생의 객체 student에 저장
-        for (Student tmp_student : studentStore) {
-            if (tmp_student.getStudentId().equals(studentId)) {
-                student = tmp_student;
-                break;
-            }
-        }
-
-        while (true) {
-            // 기능 구현 (조회할 특정 과목)
-            index = 1;
-            System.out.println("조회 하실 과목을 입력 해주세요 : ");
-            // 과목 번호, 과목 이름 출력
-            for (Subject sub : subjectStore) {
-                System.out.println(index++ + ". " + sub.getSubjectName());
-            }
-
-
-            //예외 처리 (알맞은 값만 입력 받도록)
-            try {
-                String input = sc.next();
-                find_Sub_Num = Integer.parseInt(input);
-                if (find_Sub_Num < 1 || find_Sub_Num > 9) {
-                    System.out.println("해당 과목 번호는 유효하지 않습니다.");
-                    continue;
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("숫자를 입력 해주시길 바랍니다.");
-                continue;
-            }
-
-            System.out.println("회차별 등급을 조회합니다...");
-            if (find_Sub_Num <= 5) displayGrade_Mandatory(student, find_Sub_Num);
-            else displayGrade_Choice(student, find_Sub_Num);
-
-            System.out.println("\n등급 조회 성공!");
-
-            break;
-        }
-
     }
 
     // 해당 학생의 필수 과목 점수 조회

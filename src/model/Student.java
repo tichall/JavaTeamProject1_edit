@@ -44,7 +44,7 @@ public class Student {
         this.studentStatus = studentStatus;
     }
 
-    public Object getStatus() {
-        return studentStatus;
-    }
+//    public Object getStatus() {
+//        return studentStatus;
+//    }
 }
