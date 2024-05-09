@@ -19,4 +19,12 @@ public class Score {
     public String getStudentId() {
         return studentId;
     }
+
+    public String getSubjectId() { return subjectId; }
+
+    public int getRound() { return round; }
+
+    public int getScoreNum() { return scoreNum; }
+
+    public char getGrade() { return grade; }
 }

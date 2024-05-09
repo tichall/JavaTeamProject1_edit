@@ -79,7 +79,6 @@ public class CampManagementApplication {
                         "MongoDB",
                         SUBJECT_TYPE_CHOICE));
         scoreStore = new ArrayList<>();
-
     }
 
     // index 자동 증가
