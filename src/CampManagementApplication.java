@@ -385,17 +385,12 @@ public class CampManagementApplication {
 
     // 수강생 상태 수정
     private static void changeStudentStatus() {
-        String studentName;
+
         String studentStatus;
-        String studentId;
         Status status = null;
         boolean statusChangeFlag;
 
-        do {
-            System.out.println("상태를 변경할 수강생 이름을 입력해주십시오.");
-            studentName = sc.next();
-            studentId = getExactStudentId(studentName);
-        } while (studentId.equals("Invalid"));
+        String studentId = getExactStudentId();
 
         do {
             statusChangeFlag = true;
@@ -442,18 +437,10 @@ public class CampManagementApplication {
 
     // 수강생 삭제
     private static void removeStudent() {
-        String studentName;
-        String studentId;
+        String studentId = getExactStudentId();
 
-        do {
-            System.out.println("삭제할 수강생 이름을 입력해주십시오.");
-            studentName = sc.next();
-            studentId = getExactStudentId(studentName);
-        } while (studentId.equals("Invalid"));
-
-        final String finalStudentId = studentId;
-        studentStore.removeIf(student -> student.getStudentId().equals(finalStudentId));
-        System.out.println(studentName +" 수강생 삭제 완료!");
+        studentStore.removeIf(student -> student.getStudentId().equals(studentId));
+        System.out.println(studentId +" 수강생 삭제 완료!");
     }
 
     private static void displayScoreView() {
