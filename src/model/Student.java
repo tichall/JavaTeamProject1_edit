@@ -1,21 +1,20 @@
 package model;
-import model.Subject;
 
 import java.util.HashMap;
 
 public class Student {
     private String studentId;
     private String studentName;
-    private String studentStatus;
+    private Status studentStatus;
 
-    private HashMap<String, Subject> subjectList;
-    private HashMap<String, int[]> scoreList;
+    private HashMap<String, Subject> subjectHashMap;
+    private HashMap<String, int[]> scoreHashMap;
 
-    public Student(String seq, String studentName, String status) {
+    public Student(String seq, String studentName, Status status) {
         this.studentId = seq;
         this.studentName = studentName;
-        this.subjectList = new HashMap<>();
-        this.scoreList = new HashMap<>();
+        this.subjectHashMap = new HashMap<>();
+        this.scoreHashMap = new HashMap<>();
         this.studentStatus = status;
     }
 
@@ -27,24 +26,23 @@ public class Student {
         return studentName;
     }
 
-    public HashMap<String, Subject> getSubjectList() {
-        return subjectList;
+    public HashMap<String, Subject> getSubjectHashMap() {
+        return subjectHashMap;
     }
 
-    public HashMap<String, int[]> getScoreList(){
-        return scoreList;
-    }
-    public String getStudentStatus() { return studentStatus; }
-
-    public void changeName(String changeName) {
-        this.studentName = changeName;
+    public HashMap<String, int[]> getScoreHashMap(){
+        return scoreHashMap;
     }
 
-    public void changeStatus(String studentStatus) {
+    public void changeName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public void changeStatus(Status studentStatus) {
         this.studentStatus = studentStatus;
     }
 
-    public Object getStatus() {
+    public Object getStudentStatus() {
         return studentStatus;
     }
 }
