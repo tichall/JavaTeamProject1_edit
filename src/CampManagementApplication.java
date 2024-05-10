@@ -12,8 +12,8 @@ public class CampManagementApplication {
     private static List<Subject> subjectStore;
 
     // 과목 타입
-    private static final String SUBJECT_TYPE_MANDATORY = "MANDATORY";
-    private static final String SUBJECT_TYPE_CHOICE = "CHOICE";
+    private static final String SUBJECT_TYPE_MANDATORY = "필수";
+    private static final String SUBJECT_TYPE_CHOICE = "선택";
 
     private static final int MANDATORY_MIN = 3;
     private static final int CHOICE_MIN = 2;
@@ -157,7 +157,7 @@ public class CampManagementApplication {
 
     // 수강생 등록
     private static void createStudent() {
-        System.out.println("\n수강생을 등록합니다...");
+        System.out.println("수강생을 등록합니다...");
         System.out.print("수강생 이름 입력: ");
         String studentName = sc.next();
         sc.nextLine();
@@ -242,19 +242,11 @@ public class CampManagementApplication {
 
     public static void printSubjects(String subjectType) {
         System.out.println("=========================");
-        if (subjectType.equals(SUBJECT_TYPE_MANDATORY)) {
-            System.out.print("[필수] ");
-            for (Subject sub : subjectStore) {
-                if (sub.getSubjectType().equals(SUBJECT_TYPE_MANDATORY)) {
-                    System.out.print(sub.getSubjectId().substring(2) + ". " + sub.getSubjectName() + " | ");
-                }
-            }
-        } else {
-            System.out.print("[선택] ");
-            for (Subject sub : subjectStore) {
-                if (sub.getSubjectType().equals(SUBJECT_TYPE_CHOICE)) {
-                    System.out.print(sub.getSubjectId().substring(2) + ". " + sub.getSubjectName() + " | ");
-                }
+        System.out.print("[" + subjectType + "] ");
+
+        for (Subject sub : subjectStore) {
+            if (sub.getSubjectType().equals(subjectType)) {
+                System.out.print(sub.getSubjectId().substring(2) + ". " + sub.getSubjectName() + " | ");
             }
         }
         System.out.println();
