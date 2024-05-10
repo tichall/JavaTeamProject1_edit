@@ -211,10 +211,8 @@ public class CampManagementApplication {
             } else {
                 // 입력한 값 중 하나라도 과목 목록에 존재하지 않으면 다시 입력 받아야 함
                 for (String subjectId : subjectArr) {
-                    // 입력받은 번호를 과목 고유번호 형식으로 포맷팅
                     subjectId = INDEX_TYPE_SUBJECT + subjectId;
                     for (Subject sub : subjectStore) {
-                        // 입력한 과목명이 등록된 과목 번호와 일치할 때
                         if (subjectId.equals(sub.getSubjectId()) && sub.getSubjectType().equals(subjectType)) {
                             subjectMap.put(sub.getSubjectId(), sub);
                             subjectAddFlag = true;
@@ -232,12 +230,12 @@ public class CampManagementApplication {
         } while (!subjectAddFlag);
 
         // 오류 없이 과목을 잘 선택한 경우 student 과목 목록 map에 추가
-        student.getSubjectList().putAll(subjectMap);
+        student.getSubjectHashMap().putAll(subjectMap);
 
-        for (String subject : student.getSubjectList().keySet()) {
+        for (String subject : student.getSubjectHashMap().keySet()) {
             int[] arr = new int[10];
             Arrays.fill(arr, -1);
-            student.getScoreList().put(subject, arr);
+            student.getScoreHashMap().put(subject, arr);
         }
         System.out.println(subjectType + " 과목 등록 완료!");
     }
@@ -271,8 +269,13 @@ public class CampManagementApplication {
         }
     }
 
-    // 학생 이름 정확히 입력받기
+    /**
+     * 학생
+     * @param studentName
+     * @return
+     */
     private static String getExactStudentId(String studentName) {
+
         List<Student> sameNameStudentList = new ArrayList<>();
         for (Student student : studentStore) {
             if (student.getStudentName().equals(studentName)) {
@@ -308,17 +311,66 @@ public class CampManagementApplication {
             return sameNameStudentList.get(0).getStudentId();
         }
     }
+    private static String getExactStudentId() {
+        String studentName;
+        String studentId = "Invalid";
+        List<Student> sameNameStudentList = new ArrayList<>();
+
+        do {
+            System.out.println("관리할 수강생의 이름을 입력해주십시오.");
+            studentName = sc.next();
+
+            for (Student student : studentStore) {
+                if (student.getStudentName().equals(studentName)) {
+                    sameNameStudentList.add(student);
+                }
+            }
+
+            // 두 명 이상인 경우
+            if (sameNameStudentList.size() > 1) {
+                while (true) {
+                    try {
+                        System.out.println("=========================");
+                        System.out.println("해당 이름을 가진 수강생 목록입니다!");
+                        inquireStudent(sameNameStudentList);
+                        System.out.println("=========================");
+                        System.out.print("수강생의 번호를 입력해주세요! (숫자만 입력) : ");
+                        int studentNum = sc.nextInt();
+                        for (Student student : sameNameStudentList) {
+                            if (student.getStudentId().equals(INDEX_TYPE_STUDENT + studentNum)) {
+                                studentId =  student.getStudentId();
+                                break;
+                            }
+                        }
+
+                        if (studentId.equals("Invalid")) {
+                            System.out.println("올바른 수강생 번호를 입력해주세요!");
+                        } else {
+                            break;
+                        }
+
+                    } catch (InputMismatchException e) {
+                        System.out.println("숫자를 입력해주세요!");
+                        sc.nextLine();
+                    }
+                }
+            } else if (sameNameStudentList.isEmpty()) { // 일치하는 수강생이 없을 때
+                System.out.println("이름이 일치하는 수강생이 없습니다!");
+                studentId = "Invalid";
+            } else {
+                studentId =  sameNameStudentList.get(0).getStudentId();
+            }
+
+        } while (studentId.equals("Invalid"));
+
+        return studentId;
+    }
 
     // 수강생 이름 변경
     private static void changeStudentName() {
-        String studentName;
-        String studentId;
 
-        do {
-            System.out.println("이름을 변경할 수강생 이름을 입력해주십시오.");
-            studentName = sc.next();
-            studentId = getExactStudentId(studentName);
-        } while (studentId.equals("Invalid"));
+        String studentId;
+        studentId = getExactStudentId();
 
         System.out.println("변경할 이름을 입력해 주십시오.");
         String changeName = sc.next();
@@ -382,7 +434,7 @@ public class CampManagementApplication {
             }
         } while (!statusInquireFlag);
         for (Student student : studentStore) { // studentStore를 돌며
-            if (student.getStatus().equals(Status.valueOf(state))) { // 상태가 입력받은 것과 같으면
+            if (student.getStudentStatus().equals(Status.valueOf(state))) { // 상태가 입력받은 것과 같으면
                 System.out.println(student.getStudentName() + " : " + state); // 수강생 이름과 상태를 출력하기
             }
         }
@@ -512,7 +564,7 @@ public class CampManagementApplication {
             try {
                 subject_Name = subjectStore.get(subject_Num - 1).getSubjectName();
                 if (!Objects.isNull(student) &&
-                        student.getSubjectList().get(INDEX_TYPE_SUBJECT + subject_Num).getSubjectName().equals(subject_Name))
+                        student.getSubjectHashMap().get(INDEX_TYPE_SUBJECT + subject_Num).getSubjectName().equals(subject_Name))
                     break;
             } catch (Exception e) {
                 System.out.println("해당 학생은 입력하신 과목을 수강하지 않습니다.");
@@ -522,7 +574,7 @@ public class CampManagementApplication {
 
         while (true) {
             // ★★ 입력받은 과목의 점수가 저장 되어있는 배열
-            int[] arr = student.getScoreList().get(INDEX_TYPE_SUBJECT + subject_Num);
+            int[] arr = student.getScoreHashMap().get(INDEX_TYPE_SUBJECT + subject_Num);
 
             System.out.println("등록 하실 회차(1 ~ 10)를 입력 해주세요.");
             int num = sc.nextInt();
@@ -548,7 +600,7 @@ public class CampManagementApplication {
 
             arr[num - 1] = score_tmp;
             // 수정 완료
-            student.getScoreList().put(subject_Name, arr);
+            student.getScoreHashMap().put(subject_Name, arr);
             break;
         }
 
@@ -562,11 +614,11 @@ public class CampManagementApplication {
         System.out.println("=========================");
 
         // 과목 번호 순으로 해시맵 오름차순 정렬
-        List<String> mapKey = new ArrayList<>(student.getSubjectList().keySet());
+        List<String> mapKey = new ArrayList<>(student.getSubjectHashMap().keySet());
         Collections.sort(mapKey);
 
         for (String key : mapKey) {
-            String subjectName = student.getSubjectList().get(key).getSubjectName();
+            String subjectName = student.getSubjectHashMap().get(key).getSubjectName();
             System.out.println(key.substring(2) + ". " + subjectName);
         }
 
@@ -604,8 +656,8 @@ public class CampManagementApplication {
                 selectedSubjectId = INDEX_TYPE_SUBJECT + inputSubjectId;
 
                 // 과목 목록에 입력한 과목 번호와 일치하는 과목이 존재한다면..
-                if (student.getSubjectList().containsKey(selectedSubjectId)) {
-                    int[] selectedSubjectArr = student.getScoreList().get(selectedSubjectId);
+                if (student.getSubjectHashMap().containsKey(selectedSubjectId)) {
+                    int[] selectedSubjectArr = student.getScoreHashMap().get(selectedSubjectId);
                     for (int i = 0; i < selectedSubjectArr.length; i++) {
                         // 회차 점수가 등록되지 않은 경우
                         if (selectedSubjectArr[i] == -1) {
@@ -631,7 +683,7 @@ public class CampManagementApplication {
                 int selectedScoreNum = sc.nextInt();
                 // 옳은 회차 번호를 입력했을 때만 점수 수정 실행
                 if (selectedScoreNum >= 1 && selectedScoreNum <= 10) {
-                    updateRealScore(student.getScoreList().get(selectedSubjectId), selectedScoreNum);
+                    updateRealScore(student.getScoreHashMap().get(selectedSubjectId), selectedScoreNum);
                 } else {
                     updateRoundFlag = false;
                     System.out.println("올바른 회차 번호를 입력해주세요!");
@@ -744,14 +796,14 @@ public class CampManagementApplication {
         for (Subject sub : subjectStore) { // sub를 다 뒤져서 그런가 학생이 가진 과목만 봐야됨
             switch (sub.getSubjectName()) {
                 case "Java", "객체지향", "Spring", "JPA", "MySQL":
-                    if (student != null && student.getScoreList().get(sub.getSubjectName()) != null) {
+                    if (student != null && student.getScoreHashMap().get(sub.getSubjectName()) != null) {
                         System.out.print(sub.getSubjectName() + " 과목 평균 등급 :");
                         averageGradeMandatory(student, sub.getSubjectId());
                         System.out.println();
                     }
                     break;
                 case "디자인 패턴", "Spring Security", "Redis", "MongoDB":
-                    if (student != null && student.getSubjectList().get(sub.getSubjectName()) != null) {
+                    if (student != null && student.getSubjectHashMap().get(sub.getSubjectName()) != null) {
                         System.out.print(sub.getSubjectName() + " 과목 평균 등급 :");
                         averageGradeChoice(student, sub.getSubjectId());
                         System.out.println();
@@ -779,9 +831,9 @@ public class CampManagementApplication {
             }
         } while (!statusInquireFlag);
         for (Student student : studentStore) {
-            if (student.getStatus().equals(status)) {
+            if (student.getStudentStatus().equals(status)) {
                 System.out.println(student.getStudentName() + " 님의 평균 과목 등급 ");
-                Set<String> set = student.getSubjectList().keySet();
+                Set<String> set = student.getSubjectHashMap().keySet();
                 for (String key : set) {
                     for (Subject sub : subjectStore) {
                         if (key.equals(sub.getSubjectId())) {
@@ -801,7 +853,7 @@ public class CampManagementApplication {
         double sum = 0;
         double average;
         int count = 0;
-        int[] arr = student.getScoreList().get(subjectId);
+        int[] arr = student.getScoreHashMap().get(subjectId);
 
         for (int j : arr) {
             if (j == -1)
@@ -819,7 +871,7 @@ public class CampManagementApplication {
         double sum = 0;
         double average;
         int count = 0;
-        int[] arr = student.getScoreList().get(subjectId);
+        int[] arr = student.getScoreHashMap().get(subjectId);
 
         for (int j : arr) {
             if (j == -1)
@@ -834,7 +886,7 @@ public class CampManagementApplication {
 
     // 해당 학생의 필수 과목 점수 조회
     private static void displayGradeMandatory(Student student, int findSubNum) {
-        int[] arr = student.getScoreList().get(INDEX_TYPE_SUBJECT + findSubNum);
+        int[] arr = student.getScoreHashMap().get(INDEX_TYPE_SUBJECT + findSubNum);
 
         for (int i = 0; i < arr.length; i++) {
             if (arr[i] == -1) continue;
@@ -844,7 +896,7 @@ public class CampManagementApplication {
 
     // 해당 학생의 선택 과목 점수 조회
     private static void displayGradeChoice(Student student, int findSubNum) {
-        int[] arr = student.getScoreList().get(INDEX_TYPE_SUBJECT + findSubNum);
+        int[] arr = student.getScoreHashMap().get(INDEX_TYPE_SUBJECT + findSubNum);
 
         for (int i = 0; i < arr.length; i++) {
             if (arr[i] == -1) continue;
@@ -874,34 +926,45 @@ public class CampManagementApplication {
 
     // 수강생 필수 과목 성적 등급 변환
     private static char changeGradeMandatory(double num) {
-        if (num >= 95)
+        if (num >= 95) {
             return 'A';
-        else if (num >= 90)
+        }
+        else if (num >= 90) {
             return 'B';
-        else if (num >= 80)
+        }
+        else if (num >= 80) {
             return 'C';
-        else if (num >= 70)
+        }
+        else if (num >= 70) {
             return 'D';
-        else if (num >= 60)
+        }
+        else if (num >= 60) {
             return 'F';
-        else
+        }
+        else {
             return 'N';
+        }
     }
 
     // 수강생 선택 과목 성적 등급 변환
     private static char changeGradeChoice(double num) {
-        if (num >= 90)
+        if (num >= 90) {
             return 'A';
-        else if (num >= 80)
+        }
+        else if (num >= 80) {
             return 'B';
-        else if (num >= 70)
+        }
+        else if (num >= 70) {
             return 'C';
-        else if (num >= 60)
+        }
+        else if (num >= 60) {
             return 'D';
-        else if (num >= 50)
+        }
+        else if (num >= 50) {
             return 'F';
-        else
+        }
+        else {
             return 'N';
+        }
     }
-
 }
