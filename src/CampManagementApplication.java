@@ -303,6 +303,7 @@ public class CampManagementApplication {
             return sameNameStudentList.get(0).getStudentId();
         }
     }
+
     private static String getExactStudentId() {
         String studentName;
         String studentId = "Invalid";
